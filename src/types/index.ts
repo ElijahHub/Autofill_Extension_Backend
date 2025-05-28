@@ -12,5 +12,5 @@ export interface VirusTotalResponse {
   total_engines: number;
   detected_malicious: number;
   confidence_score: number;
-  verdict: "clean" | "malicious";
+  verdict: "clean" | "malicious" | "suspicious";
 }

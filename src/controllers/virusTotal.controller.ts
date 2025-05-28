@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import axios from "axios";
 import { type VirusTotalResponse, virusTotalSchema } from "../types";
 import { VIRUS_TOTAL_API_KEY, VIRUS_TOTAL_API_URL } from "../config";
+import { classifyThreat } from "../utils";
 
 if (!VIRUS_TOTAL_API_KEY || !VIRUS_TOTAL_API_URL) {
   throw new Error(
@@ -51,7 +52,7 @@ export async function checkUrlWithVirusTotal(
       total_engines: total,
       detected_malicious: detectedMalicious,
       confidence_score: score,
-      verdict: detectedMalicious > 20 ? "malicious" : "clean",
+      verdict: classifyThreat(detectedMalicious, total),
     };
 
     res.status(200).json(result);
