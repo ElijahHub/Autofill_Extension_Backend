@@ -4,11 +4,10 @@ import { type VirusTotalResponse, virusTotalSchema } from "../types";
 import { VIRUS_TOTAL_API_KEY, VIRUS_TOTAL_API_URL } from "../config";
 import { classifyThreat } from "../utils";
 
-if (!VIRUS_TOTAL_API_KEY || !VIRUS_TOTAL_API_URL) {
+if (!VIRUS_TOTAL_API_KEY || !VIRUS_TOTAL_API_URL)
   throw new Error(
     "VIRUS_TOTAL_API_KEY is not set in the environment variables"
   );
-}
 
 export async function checkUrlWithVirusTotal(
   req: Request,
