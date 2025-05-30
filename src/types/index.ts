@@ -14,3 +14,25 @@ export interface VirusTotalResponse {
   confidence_score: number;
   verdict: "clean" | "malicious" | "suspicious";
 }
+
+export interface FieldDetail {
+  name: string | null;
+  type: string;
+  reason: string;
+  location?: string;
+  selector?: string;
+  boundingBox?: {
+    top: number;
+    left: number;
+    width: number;
+    height: number;
+  };
+}
+
+export interface HiddenField {
+  name: string | null;
+  type: string;
+  reason: string;
+  location: string;
+  selector: string;
+}
