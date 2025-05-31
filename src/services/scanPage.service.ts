@@ -103,10 +103,9 @@ export async function detectHiddenFormsWithJSDOM(
 //Advance scan using puppeteer
 
 export async function detectHiddenFormsWithPuppeteer(
-  url: string,
-  headless: boolean | "shell" = true
+  url: string
 ): Promise<{ hiddenFields: FieldDetail[] }> {
-  const browser = await puppeteer.launch({ headless });
+  const browser = await puppeteer.launch({ headless: true });
   const page = await browser.newPage();
 
   try {

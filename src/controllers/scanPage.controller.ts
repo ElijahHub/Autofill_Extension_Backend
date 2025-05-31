@@ -26,7 +26,7 @@ export async function scanPageHandler(req: Request, res: Response) {
         result = await detectHiddenFormsWithJSDOM(url);
         break;
       case "advanced":
-        result = await detectHiddenFormsWithPuppeteer(url, true);
+        result = await detectHiddenFormsWithPuppeteer(url);
         break;
       default:
         res.status(400).json({ error: "Invalid scan level" });
