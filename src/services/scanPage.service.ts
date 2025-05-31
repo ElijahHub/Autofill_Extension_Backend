@@ -1,6 +1,6 @@
 import jsdom from "jsdom";
 import axios from "axios";
-import puppeteer from "puppeteer";
+import puppeteer, { Frame, Puppeteer } from "puppeteer";
 import { FieldDetail, HiddenField } from "../types";
 
 //Simple Scan using jsdom
@@ -101,93 +101,99 @@ export async function detectHiddenFormsWithJSDOM(
 }
 
 //Advance scan using puppeteer
+
 export async function detectHiddenFormsWithPuppeteer(
   url: string,
   headless: boolean | "shell" = true
 ): Promise<{ hiddenFields: FieldDetail[] }> {
-  const browser = await puppeteer.launch({ headless: headless });
+  const browser = await puppeteer.launch({ headless });
   const page = await browser.newPage();
 
   try {
     await page.goto(url, { waitUntil: "networkidle2", timeout: 30000 });
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    await new Promise((resolve) => setTimeout(resolve, 3000)); // wait for any dynamic content
 
-    const hiddenFields: FieldDetail[] = [];
-
-    // Function to check if an element is hidden
-    function isHidden(el: HTMLElement): boolean {
-      const style = window.getComputedStyle(el);
-      return (
-        style.display === "none" ||
-        style.visibility === "hidden" ||
-        style.opacity === "0" ||
-        el.offsetWidth === 0 ||
-        el.offsetHeight === 0 ||
-        el.getAttribute("type") === "hidden" ||
-        el.getAttribute("aria-hidden") === "true"
-      );
-    }
-
-    // Function to check if an element has a hidden ancestor
-    function hasHiddenAncestor(el: HTMLElement): boolean {
-      let parent = el.parentElement;
-      while (parent) {
-        if (isHidden(parent)) return true;
-        parent = parent.parentElement;
-      }
-      return false;
-    }
-
-    // Function to evaluate hidden fields in the main page and iframes
-    function evaluateHiddenFields() {
-      const result: FieldDetail[] = [];
-
-      const inputs = Array.from(
-        document.querySelectorAll<
-          HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-        >("input, textarea, select")
-      );
-
-      inputs.forEach((input) => {
-        const type = (input as HTMLInputElement).type || "text";
-        const isInputHidden = isHidden(input) || hasHiddenAncestor(input);
-
-        if (isInputHidden) {
-          const boundingBox = input.getBoundingClientRect();
-          result.push({
-            name: input.getAttribute("name"),
-            type,
-            reason: "Hidden via CSS, type, or hidden ancestor",
-            selector: input.outerHTML.slice(0, 100),
-            location: "main page",
-            boundingBox: {
-              top: boundingBox.top,
-              left: boundingBox.left,
-              width: boundingBox.width,
-              height: boundingBox.height,
-            },
-          });
+    // Function to evaluate hidden fields in a frame
+    const evaluateHiddenFields = async (
+      frame: Frame,
+      location: string
+    ): Promise<FieldDetail[]> => {
+      return await frame.evaluate((location: any) => {
+        function isHidden(el: HTMLElement): boolean {
+          const style = window.getComputedStyle(el);
+          return (
+            style.display === "none" ||
+            style.visibility === "hidden" ||
+            style.opacity === "0" ||
+            el.offsetWidth === 0 ||
+            el.offsetHeight === 0 ||
+            el.getAttribute("type") === "hidden" ||
+            el.getAttribute("aria-hidden") === "true"
+          );
         }
-      });
 
-      return result;
-    }
+        function hasHiddenAncestor(el: HTMLElement): boolean {
+          let parent = el.parentElement;
+          while (parent) {
+            if (isHidden(parent)) return true;
+            parent = parent.parentElement;
+          }
+          return false;
+        }
 
-    const pageHiddenFields = await page.evaluate(evaluateHiddenFields);
+        const result: FieldDetail[] = [];
 
-    hiddenFields.push(...pageHiddenFields);
+        const inputs = Array.from(
+          document.querySelectorAll("input, textarea, select")
+        ) as (HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement)[];
 
-    // Evaluate hidden fields in iframes
-    const frames = page.frames().filter((f) => f.url() !== page.url());
-    frames.forEach(async (frame) => {
+        inputs.forEach((input) => {
+          const type = (input as HTMLInputElement).type || "text";
+          const isInputHidden = isHidden(input) || hasHiddenAncestor(input);
+
+          if (isInputHidden) {
+            const boundingBox = input.getBoundingClientRect();
+            result.push({
+              name: input.getAttribute("name"),
+              type,
+              reason: "Hidden via CSS, type, or hidden ancestor",
+              selector: `${input.tagName.toLowerCase()}[name="${input.getAttribute(
+                "name"
+              )}"]`,
+              location,
+              boundingBox: {
+                top: boundingBox.top,
+                left: boundingBox.left,
+                width: boundingBox.width,
+                height: boundingBox.height,
+              },
+            });
+          }
+        });
+
+        return result;
+      }, location);
+    };
+
+    // Collect hidden fields from main frame
+    const hiddenFields: FieldDetail[] = await evaluateHiddenFields(
+      page.mainFrame(),
+      "main page"
+    );
+
+    // Collect hidden fields from iframes
+    const frames = page.frames().filter((f) => f !== page.mainFrame());
+    for (const frame of frames) {
       try {
-        const iframeHiddenFields = await frame.evaluate(evaluateHiddenFields);
-        iframeHiddenFields.forEach((field) => field.location === "iframe");
+        const iframeHiddenFields = await evaluateHiddenFields(
+          frame,
+          `iframe (${frame.url()})`
+        );
         hiddenFields.push(...iframeHiddenFields);
-      } catch (error) {
-        console.warn(`Could not evaluate iframe (${frame.url()}):`, error);
+      } catch (error: any) {
+        console.warn(`Skipping iframe (${frame.url()}):`, error.message);
       }
-    });
+    }
 
     return { hiddenFields };
   } catch (error) {

@@ -25,9 +25,6 @@ export async function scanPageHandler(req: Request, res: Response) {
       case "simple":
         result = await detectHiddenFormsWithJSDOM(url);
         break;
-      case "medium":
-        result = await detectHiddenFormsWithPuppeteer(url, "shell");
-        break;
       case "advanced":
         result = await detectHiddenFormsWithPuppeteer(url, true);
         break;
