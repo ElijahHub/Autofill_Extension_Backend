@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import axios from "axios";
-import { virusTotalSchema } from "../types";
+import { urlSchema } from "../types";
 import { classifyThreats } from "../utils";
 import { GSB_API_KEY, GSB_API_URL } from "../config";
 
@@ -10,7 +10,7 @@ if (!GSB_API_KEY || !GSB_API_URL)
 const apiUrl = `${GSB_API_URL}/threatMatches:find?key=${GSB_API_KEY}`;
 
 export async function checkUrlWithGSB(req: Request, res: Response) {
-  const parsed = virusTotalSchema.safeParse(req.body);
+  const parsed = urlSchema.safeParse(req.body);
 
   if (!parsed.success) {
     res.status(400).json({

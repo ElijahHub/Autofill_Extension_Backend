@@ -1,11 +1,17 @@
 import { z } from "zod";
 
-export const virusTotalSchema = z.object({
+export const urlSchema = z.object({
   url: z.string().url("Invalid URL format"),
 });
 
-export type VirusTotalCheckInput = z.infer<typeof virusTotalSchema>;
+export type VirusTotalCheckInput = z.infer<typeof urlSchema>;
 
+export const scanSchema = z.object({
+  url: z.string().url("Invalid URL format"),
+  level: z.string(),
+});
+
+export type ScanType = z.infer<typeof scanSchema>;
 export interface VirusTotalResponse {
   url: string;
   source: "VirusTotal";

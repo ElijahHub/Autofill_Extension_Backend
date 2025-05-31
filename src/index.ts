@@ -3,6 +3,7 @@ import rateLimit from "express-rate-limit";
 import { PORT } from "./config";
 import virusTotalRoutes from "./routes/virusTotal.routes";
 import googleSafeRoutes from "./routes/googleSafe.routes";
+import scanPageRoutes from "./routes/scanPage.routes";
 
 const app = express();
 app.use(express.json());
@@ -19,6 +20,8 @@ app.use("/api", limiter);
 app.use("/api/virustotal", virusTotalRoutes);
 
 app.use("/api/google-safe", googleSafeRoutes);
+
+app.use("/api/analyze-page", scanPageRoutes);
 
 // Health check endpoint
 app.get("/health-check", (req, res) => {

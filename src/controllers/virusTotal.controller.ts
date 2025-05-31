@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import axios from "axios";
-import { type VirusTotalResponse, virusTotalSchema } from "../types";
+import { type VirusTotalResponse, urlSchema } from "../types";
 import { VIRUS_TOTAL_API_KEY, VIRUS_TOTAL_API_URL } from "../config";
 import { classifyThreat } from "../utils";
 
@@ -13,7 +13,7 @@ export async function checkUrlWithVirusTotal(
   req: Request,
   res: Response
 ): Promise<void> {
-  const parsed = virusTotalSchema.safeParse(req.body);
+  const parsed = urlSchema.safeParse(req.body);
 
   if (!parsed.success) {
     res.status(400).json({
