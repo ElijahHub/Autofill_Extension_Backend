@@ -6,6 +6,9 @@ import googleSafeRoutes from "./routes/googleSafe.routes";
 import scanPageRoutes from "./routes/scanPage.routes";
 
 const app = express();
+
+app.set("trust proxy", 1);
+
 app.use(express.json());
 
 // Rate limiting middleware
