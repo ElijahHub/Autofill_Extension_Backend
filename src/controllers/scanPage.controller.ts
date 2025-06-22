@@ -1,8 +1,7 @@
 import { Request, Response } from "express";
-import {
-  detectHiddenFormsWithJSDOM,
-  detectHiddenFormsWithPuppeteer,
-} from "../services/scanPage.service";
+import { detectHiddenFormsWithJSDOM } from "../services/simpleScan.service";
+
+import { detectHiddenFormsWithPuppeteer } from "../services/advanceScan.service";
 import { scanSchema } from "../types";
 
 export async function scanPageHandler(req: Request, res: Response) {

@@ -12,6 +12,7 @@ export const scanSchema = z.object({
 });
 
 export type ScanType = z.infer<typeof scanSchema>;
+
 export interface VirusTotalResponse {
   url: string;
   source: "VirusTotal";
